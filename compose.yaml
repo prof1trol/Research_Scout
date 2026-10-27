@@ -1,0 +1,42 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+
+  backend:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_PATH: /app/data/research.db
+    volumes:
+      - ./data:/app/data
+    command: ["uvicorn", "app.api.server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  researcher:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    environment:
+      DATABASE_PATH: /app/data/research.db
+    volumes:
+      - ./data:/app/data
+    command: ["python", "-m", "app.main"]
+    stdin_open: true
+    tty: true
+
+  searxng:
+    image: searxng/searxng:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./settings.yml:/etc/searxng/settings.yml
+    restart: unless-stopped
+    
+
+volumes:
+  searxng_data:
